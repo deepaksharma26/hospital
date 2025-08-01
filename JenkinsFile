@@ -1,0 +1,72 @@
+// Jenkinsfile
+pipeline {
+    agent any
+
+    environment {
+        // Set your build directory and server details here
+        BUILD_DIR = 'build'
+        SERVER_USER = 'youruser'
+        SERVER_HOST = 'your.server.com'
+        SERVER_PATH = '/var/www/html/your-app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the specified branch
+                git branch: "${params.BRANCH_NAME ?: 'main'}", url: 'https://github.com/yourorg/your-repo.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            when {
+                anyOf {
+                    branch 'DEV'
+                    branch 'QA'
+                    branch 'PROD'
+                }
+            }
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Build') {
+            when {
+                anyOf {
+                    branch 'DEV'
+                    branch 'QA'
+                    branch 'PROD'
+                }
+            }
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'DEV'
+            }
+            steps {
+                // Deploy only if on main branch
+                sh """
+                    rsync -avz --delete ${BUILD_DIR}/ ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/
+                """
+            }
+        }
+    }
+
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Git branch to build and deploy')
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
