@@ -15,7 +15,7 @@ const menuItems = [
   { label: 'Billing', icon: <AccountCircleIcon />, path: routesName.BILLING },
   { label: 'Billing Item', icon: <AccountCircleIcon />, path: routesName.BILLING_ITEM },
   { label: 'Financial Year', icon: <AccountCircleIcon />, path: routesName.FINANCIALYEAR },
-  { label: 'Logout', icon: <LogoutIcon />, path: '/logout', logout: true },
+  { label: 'Logout', icon: <LogoutIcon />, path: '/logout' },
 ];
 
 const Sidebar = ({ onLogout }) => {

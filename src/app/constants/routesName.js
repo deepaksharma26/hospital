@@ -8,6 +8,8 @@ export const routesName ={
   CHANGE_PASSWORD: '/change-password',
   NOT_FOUND: '*',
   BILLING: '/billing',
+  LISTBILLIS: '/list-billings',
+  EDITBILLING: '/edit-billing',
   BILLING_ITEM: '/billing-item',
   FINANCIALYEAR: '/financial-year',
   

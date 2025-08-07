@@ -1,4 +1,4 @@
-export const fromatDate = (date) => {
+export const formatDate = (date) => {
   const options = {  day: 'numeric', month: 'long', year: 'numeric' };
   return new Date(date).toLocaleDateString(undefined, options);
 }
@@ -7,7 +7,7 @@ export const formatTime = (time) => {
   return new Date(time).toLocaleTimeString(undefined, options);
 }
 export const formatDateTime = (dateTime) => {
-  const date = fromatDate(dateTime);
+  const date = formatDate(dateTime);
   const time = formatTime(dateTime);
   return `${date} at ${time}`;
 }

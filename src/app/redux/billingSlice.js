@@ -4,33 +4,40 @@ import { apiRoutes } from "../constants/apiRoutes";
 import { getMethod, postMethod, putMethod } from "../../api";
 // Async thunk for fetching billing items
 export const fetchBillingList = createAsyncThunk('billing/fetchBilling', async ()=> {
-  const response = await getMethod(apiRoutes.BILLING_ITEM);
+  const response = await getMethod(apiRoutes.BILLING);
   return response;
 });
+export const fetchBillingById = createAsyncThunk('billing/fetchBillingById', async (billingId)=> {
+  const response = await getMethod(apiRoutes.BILLING+`/${billingId}`);
+  return response;
+});
+
 export const addBilling = createAsyncThunk(
-  'billingItems/addOrUpdateBilling',
-  async (billingItemData) => {
-    const response = await postMethod(apiRoutes.BILLING_ITEM, billingItemData);
+  'billing',
+  async (billingData) => {
+    const response = await postMethod(apiRoutes.BILLING, billingData);
     return response; // Assuming the API returns the created/updated item
   }
 );
 export const updateBilling = createAsyncThunk(
-  'billingItems/updateBilling',
-    async (billingItemData) => {    
-    const response = await putMethod(`${apiRoutes.BILLING_ITEM}/${billingItemData.id}`, billingItemData);
+  'billing/updateBilling',
+  async (data) => {
+    console.log('billingItemData', data);
+    const response = await putMethod(`${apiRoutes.BILLING}/${data?.id}`, data);
     return response; // Assuming the API returns the updated item
   }
 );
 export const deleteBilling = createAsyncThunk(      
     'billing/deleteBilling',
     async (billingItemId) => {
-        const response = await postMethod(`${apiRoutes.BILLING_ITEM}/${billingItemId}`);
+        const response = await putMethod(`${apiRoutes.BILLING}/${billingItemId}`);
         return response; // Assuming the API returns a success message or the deleted item
     }
-    );  
+);  
 const BillingSlice = createSlice({
   name: 'billing',
   initialState: {
+    billingData: null,
     billings: [],
     addBillings: null,      
     updateBillings: null,
@@ -86,6 +93,18 @@ const BillingSlice = createSlice({
             state.billings = action.payload;
         })
         .addCase(fetchBillingList.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+         .addCase(fetchBillingById.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchBillingById.fulfilled, (state, action) => {
+            state.loading = false;
+            state.billingData = action.payload;
+        })    
+        .addCase(fetchBillingById.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message;
         });

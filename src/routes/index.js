@@ -15,6 +15,8 @@ const ModifyUser = React.lazy(() => import('../app/user/modifyUser')); // Lazy l
 const Billing = React.lazy(() => import('../app/billing/index')); // Lazy load the billing component
 const FinancialYear = React.lazy(() => import('../app/financialYear/FinancialYear')); // Lazy load the financial year component
 const BillingItem = React.lazy(() => import('../app/billing/billingItem')); // Lazy load the billing item component
+const BillingList = React.lazy(() => import('../app/billing/listAllBilling')); // Lazy load the billing list component
+const BillingEdit = React.lazy(() => import('../app/billing/editBilling')); // Lazy load the billing edit component
 const routesConfig = [
   {
     path: '/',
@@ -66,6 +68,14 @@ const routesConfig = [
         {
           path: routesName.BILLING_ITEM,
           element: <Dashboard element={<BillingItem/>}/>, // Assuming you have a component for billing
+        },
+        {
+          path: routesName.EDITBILLING+ '/:billingId',
+          element: <Dashboard element={<BillingEdit/>}/>, // Assuming you have a component for billing
+        },
+        {
+          path: routesName.LISTBILLIS,
+          element: <Dashboard element={<BillingList/>}/>, // Assuming you have a component for billing
         }
     ]
   },

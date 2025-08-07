@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Paper, Grid, TextField, MenuItem, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, IconButton, Divider
@@ -11,9 +11,10 @@ import { formatDate, windowWidth } from '../../utills';
 import { fetchBillingCategories } from '../redux/billingCategorySlice';
 import { fetchPaymentType } from '../redux/paymentTypeSlice';
 import { fetchFinancialYear } from '../redux/financialYearSlice';
-import { addBillingItem, fetchBillingItems } from '../redux/billingItemsSlice';
-import { addBilling } from '../redux/billingSlice';
+import { fetchBillingItems } from '../redux/billingItemsSlice';
+import { updateBilling, fetchBillingById, addBilling } from '../redux/billingSlice';
 import { routesName } from '../constants/routesName';
+import { useParams } from 'react-router-dom';
 
 // const billingTypes = ['Consultation', 'Surgery', 'Medicine', 'Other'];
 // const financialYears = ['2023-2024', '2024-2025', '2025-2026'];
@@ -47,20 +48,58 @@ function numberToWords(num) {
   return result.trim();
 }
 
-const Billing = () => {
+const EditBilling = () => {
+  const billingId = useParams().billingId;
   const { billingCategory } = useSelector((state) => state.billingCategory);
   const { paymentType } = useSelector((state) => state.paymentType);
   const { financialYears } = useSelector((state) => state.financialYear);
   const { billingItems } = useSelector((state) => state.billingItems);
   const [newItems, setNewItems] = useState(billingItems || []);
-  const dispactch = useDispatch();
+  const dispatch = useDispatch();
+  const { billingData } = useSelector((state) => state.billing);
+  const [data, setData] = useState(billingData || {});
   useEffect(() => {
+    dispatch(fetchBillingById(billingId)).then((res) => {
+      if (res.error) {
+        console.error('Error fetching billing data:', res.error);
+        return;
+      }
+      setData(res.payload);
+      setCustomer({
+        customerId: res.payload.userId,
+        name: res.payload.customerName || '',
+        address: res.payload.customerAddress || '',
+        contact: res.payload.customerPhone || '',
+      });
+      setBillingDetails({
+        billingType: res.payload.plan || '',
+        financialYear: res.payload.category || '',
+        billingDate: res.payload.invoiceDate ? new Date(res.payload.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      });
+      setItems(res.payload.billingDetails.map(item => ({
+        billingItems: item.billingItems || '',
+        itemName: item.name || '',
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice || 0,
+        taxPercent: item.taxPercent || 0,
+        tax: item.tax || 0,
+        amount: item.totalPrice || 0,
+        discount: item.discount || 0,
+      })));
+      setRemark(res.payload.details || '');
+      setCustomerNotes(res.payload.customerNotes || '');
+      setPaymentMethod(res.payload.paymentMethodDetails || '');
+      setItemSuggestions({});
+      setHighlightedSuggestion({});
+    }).catch((error) => {
+      console.error('Error fetching billing data:', error);
+    });
     // Fetch billing categories or any other necessary data
-    dispactch(fetchBillingCategories());
-    dispactch(fetchPaymentType());
-    dispactch(fetchFinancialYear());
-    dispactch(fetchBillingItems());
-  }, [dispactch]);
+    dispatch(fetchBillingCategories());
+    dispatch(fetchPaymentType());
+    dispatch(fetchFinancialYear());
+    dispatch(fetchBillingItems());
+  }, [dispatch, billingId]);
   const screenwidth = windowWidth();
 
   // Customer Info State
@@ -85,7 +124,7 @@ const Billing = () => {
 
   // Other State
   const [remark, setRemark] = useState('');
-  const [customerNotes, setCustomerNotes] = useState('');
+  const [customerNotes, setCustomerNotes ] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [itemSuggestions, setItemSuggestions] = useState({});
   const [highlightedSuggestion, setHighlightedSuggestion] = useState({});
@@ -222,8 +261,9 @@ const Billing = () => {
     e.preventDefault();
     // Submit logic here
     const data = {
+      id: billingId,
       userId: customer.customerId,
-      plan: billingDetails?.billingType?.name || '',
+      plan: billingDetails?.billingType || '',
       details: remark,
       billingDetails: items.map(item => ({
         billingItems: item.billingItems ? item.billingItems : '',
@@ -237,29 +277,32 @@ const Billing = () => {
       customerName: customer.name,
       customerAddress: customer.address,
       customerPhone: customer.contact,
+      customerNotes: customerNotes,
       category: billingDetails.financialYear,
       invoiceNumber: `INV-${Date.now()}`,
       invoiceDate: billingDetails.billingDate || new Date(),
       dueDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Due date 30 days from now
       totalAmount: totalAmount,
-      taxAmount: items.reduce((sum, item) => sum + (item.tax || 0), 0),
-      discountAmount: items.reduce((sum, item) => sum + (item.discount || 0), 0),
-      finalAmount: totalAmount + items.reduce((sum, item) => sum + (item.tax || 0), 0) - items.reduce((sum, item) => sum + (item.discount || 0), 0),
+      taxAmount: items.reduce((sum, item) => sum + (parseFloat(item.tax) || 0), 0),
+      discountAmount: items.reduce((sum, item) => sum + (parseFloat(item.discount) || 0), 0),
+      finalAmount: totalAmount + items.reduce((sum, item) => sum + (parseFloat(item.tax) || 0), 0) - items.reduce((sum, item) => sum + (parseFloat(item.discount) || 0), 0),
       currency: 'INR',
       paymentStatus: 'Pending',
       paymentDate: new Date(),
       paymentReference: '',
       paymentMethodDetails: paymentMethod,
-    }
-    console.log('Billing Data:', data); 
-    dispactch(addBilling(data)).then((res) => {
+    };
+    console.log('Submitting data:', data);  
+    dispatch(updateBilling(data)).then((res) => {
       if (res.error) {
-        console.error('Error adding billing item:', res.error);
+        console.error('Error updating billing item:', res.error);
         return;
       }else {
         // Reset form after successful submission
-        window.location.href = '/list-billings';
+        // window.location.href = '/list-billings';
       }
+       
+      //   window.location.href = '/list-all-users'; // Redirect to user list after submission
     }).catch((error) => {
       // Handle error, e.g., show an error message
       console.error('Error adding billing item:', error);
@@ -323,7 +366,7 @@ const Billing = () => {
                   sx={{ width: 180 }}
                 >
                   {billingCategory && billingCategory.map((type) => (
-                    <MenuItem key={type} value={type}>{type?.name}</MenuItem>
+                    <MenuItem key={type} value={type?.name}>{type?.name}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
@@ -522,7 +565,7 @@ const Billing = () => {
                         <TextField
                           fullWidth
                           type="text"
-                          value={item.discount?.$numberDecimal}
+                          value={item.discount}
                           onChange={e => handleItemChange(idx, 'discount', e.target.value)}
                           size="small"
                           inputProps={{ min: 0 }}
@@ -576,7 +619,7 @@ const Billing = () => {
                 rows={2}
               />
               <TextField
-                label="Customer Note"
+                label="Customer Notes"
                 value={customerNotes}
                 onChange={e => setCustomerNotes(e.target.value)}
                 fullWidth
@@ -589,7 +632,7 @@ const Billing = () => {
                 label="Payment Method"
                 name='paymentMethod'
                 value={paymentMethod}
-                onChange={e => setPaymentMethod(e.target.value)}
+                onChange={(e) => setPaymentMethod(e.target.value)}
                 fullWidth
                 sx={{ mt: 2 }}
                 required
@@ -611,4 +654,4 @@ const Billing = () => {
   );
 };
 
-export default Billing;
+export default EditBilling;
