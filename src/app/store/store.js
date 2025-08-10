@@ -10,6 +10,7 @@ import financialYearsSlice from '../redux/financialYearSlice'; // Assuming you h
 import paymentTypeSlice from '../redux/paymentTypeSlice';
 import billingItemSlice from '../redux/billingItemsSlice'; 
 import billingSlice from '../redux/billingSlice'; // Assuming you have a billingSlice
+import dashboardSlice from '../redux/dashboardSlice'; // Assuming you have a dashboardSlice
 const store = configureStore({
   reducer: {
     users: userReducer,
@@ -23,6 +24,7 @@ const store = configureStore({
     paymentType: paymentTypeSlice, // Assuming you have a paymentTypeSlice imported
     billingItems: billingItemSlice, // Assuming you have a billingItemsSlice imported
     billing: billingSlice, // Assuming you have a billingSlice imported
+    dashboard: dashboardSlice, // Assuming you have a dashboardSlice imported
   },
 });
 

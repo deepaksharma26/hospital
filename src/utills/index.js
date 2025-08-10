@@ -11,6 +11,22 @@ export const formatDateTime = (dateTime) => {
   const time = formatTime(dateTime);
   return `${date} at ${time}`;
 }
+//date to ISO string
+export const dateToISOString = (date) => {
+  return new Date(date).toISOString();
+}
+//ISO string to date
+export const isoStringToDate = (isoString) => {
+  return new Date(isoString);
+}
+//date to UTC string
+export const dateToUTCString = (date) => {
+  return new Date(date).toUTCString();
+}
+//UTC string to date
+export const utcStringToDate = (utcString) => {
+  return new Date(utcString);
+}
 export const formatNumber = (number) => {
   return new Intl.NumberFormat().format(number);
 }

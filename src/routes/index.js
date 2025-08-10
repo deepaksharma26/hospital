@@ -17,6 +17,8 @@ const FinancialYear = React.lazy(() => import('../app/financialYear/FinancialYea
 const BillingItem = React.lazy(() => import('../app/billing/billingItem')); // Lazy load the billing item component
 const BillingList = React.lazy(() => import('../app/billing/listAllBilling')); // Lazy load the billing list component
 const BillingEdit = React.lazy(() => import('../app/billing/editBilling')); // Lazy load the billing edit component
+const BillingCategory = React.lazy(() => import('../app/billingCategory/index')); // Lazy load the billing category component
+const BillingPrint = React.lazy(() => import('../app/billing/BillPrint')); // Lazy load the billing print component 
 const routesConfig = [
   {
     path: '/',
@@ -25,7 +27,7 @@ const routesConfig = [
   {
     path: routesName.LOGIN,
     element: <Login />,
-  }, 
+  },
   {
     path: routesName.REGISTER,
     element: <Register />,
@@ -35,65 +37,73 @@ const routesConfig = [
     element: <ChangePassword />, // Assuming you have a change password component
   },
   {
-    path: '/', 
-    children:[
-        {
-           path: routesName.DASHBOARD,
-           element: <Dashboard element={<Home/>}/>,
-            // element: <h1>Dashboard Home</h1>, // Placeholder for dashboard home
-        },
-        {
-           path: routesName.LIST_ALL_USERS,
-           element: <Dashboard element={<ListAllUsers/>}/>,
-            // element: <h1>Dashboard Home</h1>, // Placeholder for dashboard home
-        },
-        //add new user
-        {
-          path: routesName.ADD_USER,
-          element: <Dashboard element={<AddUser/>}/>, // Assuming you have a component for adding a user
-        },
-        //moqdify user
-        { 
-          path: routesName.MODIFY_USER + '/:userId',
-          element: <Dashboard element={<ModifyUser/>}/>, // Assuming you have a component for modifying a user
-        },
-        {
-          path: routesName.BILLING,
-          element: <Dashboard element={<Billing/>}/>, // Assuming you have a component for billing
-        },
-        {
-          path: routesName.FINANCIALYEAR,
-          element: <Dashboard element={<FinancialYear/>}/>, // Assuming you have a component for billing
-        },
-        {
-          path: routesName.BILLING_ITEM,
-          element: <Dashboard element={<BillingItem/>}/>, // Assuming you have a component for billing
-        },
-        {
-          path: routesName.EDITBILLING+ '/:billingId',
-          element: <Dashboard element={<BillingEdit/>}/>, // Assuming you have a component for billing
-        },
-        {
-          path: routesName.LISTBILLIS,
-          element: <Dashboard element={<BillingList/>}/>, // Assuming you have a component for billing
-        }
+    path: '/',
+    children: [
+      {
+        path: routesName.DASHBOARD,
+        element: <Dashboard element={<Home />} />,
+        // element: <h1>Dashboard Home</h1>, // Placeholder for dashboard home
+      },
+      {
+        path: routesName.LIST_ALL_USERS,
+        element: <Dashboard element={<ListAllUsers />} />,
+        // element: <h1>Dashboard Home</h1>, // Placeholder for dashboard home
+      },
+      //add new user
+      {
+        path: routesName.ADD_USER,
+        element: <Dashboard element={<AddUser />} />, // Assuming you have a component for adding a user
+      },
+      //moqdify user
+      {
+        path: routesName.MODIFY_USER + '/:userId',
+        element: <Dashboard element={<ModifyUser />} />, // Assuming you have a component for modifying a user
+      },
+      {
+        path: routesName.BILLING,
+        element: <Dashboard element={<Billing />} />, // Assuming you have a component for billing
+      },
+      {
+        path: routesName.FINANCIALYEAR,
+        element: <Dashboard element={<FinancialYear />} />, // Assuming you have a component for billing
+      },
+      {
+        path: routesName.BILLING_ITEM,
+        element: <Dashboard element={<BillingItem />} />, // Assuming you have a component for billing
+      },
+      {
+        path: routesName.EDITBILLING + '/:billingId',
+        element: <Dashboard element={<BillingEdit />} />, // Assuming you have a component for billing
+      },
+      {
+        path: routesName.LISTBILLIS,
+        element: <Dashboard element={<BillingList />} />, // Assuming you have a component for billing
+      },
+      {
+        path: routesName.BILLING_CATEGORY,
+        element: <Dashboard element={<BillingCategory />} />, // Assuming you have a component for billing
+      },
+      // {
+      //   path: routesName.BILLING_PRINT + '/:billingId',
+      //   element: <Dashboard element={<BillingPrint />} />,
+      // }
     ]
   },
 
-//   {
-//     path: '/about',
-//     element: <About />,
-//   },
-//   {
-//     path: '/products',
-//     element: <Products />,
-//     children: [
-//       {
-//         path: ':id', // Dynamic parameter for product ID
-//         element: <ProductDetail />,
-//       },
-//     ],
-//   },
+  //   {
+  //     path: '/about',
+  //     element: <About />,
+  //   },
+  //   {
+  //     path: '/products',
+  //     element: <Products />,
+  //     children: [
+  //       {
+  //         path: ':id', // Dynamic parameter for product ID
+  //         element: <ProductDetail />,
+  //       },
+  //     ],
+  //   },
   {
     path: '*', // Catch-all for 404 Not Found
     element: <NotFound />,

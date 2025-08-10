@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getMethod, postMethod } from "../../api"; 
+import { deleteMethod, getMethod, postMethod, putMethod } from "../../api"; 
 import { createSlice } from "@reduxjs/toolkit";
 import { apiRoutes } from "../constants/apiRoutes";
 
@@ -18,14 +18,14 @@ export const addBillingItem = createAsyncThunk(
 export const updateBillingItem = createAsyncThunk(
   'billingItems/updateBillingItem',
   async (billingItemData) => {
-    const response = await postMethod(`${apiRoutes.BILLING_ITEM}/${billingItemData.id}`, billingItemData);
+    const response = await putMethod(`${apiRoutes.BILLING_ITEM}/${billingItemData.id}`, billingItemData);
     return response // Assuming the API returns the updated item
   }
 );
 export const deleteBillingItem = createAsyncThunk(
   'billingItems/deleteBillingItem',   
   async (billingItemId) => {
-    const response = await postMethod(`${apiRoutes.BILLING_ITEM}/${billingItemId}`);
+    const response = await deleteMethod(`${apiRoutes.BILLING_ITEM}/${billingItemId}`, {});
     return response // Assuming the API returns a success message or the deleted item
   }
 );

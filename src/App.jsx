@@ -1,6 +1,6 @@
 // App.js
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, useRoutes } from 'react-router-dom';
+import { BrowserRouter, Router, useRoutes } from 'react-router-dom';
 import routesConfig from './routes/index.js';
 import PageLoader from './components/PageLoader.jsx';
 
@@ -14,10 +14,10 @@ function App() {
     document.title = "Thakur Eye Hospital - Billing System"; // Example: Set the document title
   }, []);
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageLoader />}> 
-        <AppRoutes />
-      </Suspense>
+    <BrowserRouter> 
+        <Suspense fallback={<PageLoader />}>
+          <AppRoutes />
+        </Suspense> 
     </BrowserRouter>
   );
 }

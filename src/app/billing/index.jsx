@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Paper, Grid, TextField, MenuItem, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, IconButton, Divider
+  TableContainer, TableHead, TableRow, IconButton, Divider, useMediaQuery
 } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
@@ -12,12 +12,10 @@ import { fetchBillingCategories } from '../redux/billingCategorySlice';
 import { fetchPaymentType } from '../redux/paymentTypeSlice';
 import { fetchFinancialYear } from '../redux/financialYearSlice';
 import { addBillingItem, fetchBillingItems } from '../redux/billingItemsSlice';
-import { addBilling } from '../redux/billingSlice';
+import { addBilling, fetchUserDetailsByBill } from '../redux/billingSlice';
 import { routesName } from '../constants/routesName';
-
-// const billingTypes = ['Consultation', 'Surgery', 'Medicine', 'Other'];
-// const financialYears = ['2023-2024', '2024-2025', '2025-2026'];
-// const paymentMethods = ['Cash', 'Card', 'UPI', 'Net Banking'];
+import PageLoader from '../../components/PageLoader';
+import { Loader } from '../../components/loader';
 
 function numberToWords(num) {
   if (num === 0) return 'Zero';
@@ -48,14 +46,16 @@ function numberToWords(num) {
 }
 
 const Billing = () => {
+  const isMobile = useMediaQuery('(max-width:900px)');
   const { billingCategory } = useSelector((state) => state.billingCategory);
   const { paymentType } = useSelector((state) => state.paymentType);
   const { financialYears } = useSelector((state) => state.financialYear);
   const { billingItems } = useSelector((state) => state.billingItems);
   const [newItems, setNewItems] = useState(billingItems || []);
+  // const {customerDetails} = useSelector((state) => state.billing);
+  const [openLoader, setOpenLoader] = useState(false);
   const dispactch = useDispatch();
   useEffect(() => {
-    // Fetch billing categories or any other necessary data
     dispactch(fetchBillingCategories());
     dispactch(fetchPaymentType());
     dispactch(fetchFinancialYear());
@@ -63,6 +63,46 @@ const Billing = () => {
   }, [dispactch]);
   const screenwidth = windowWidth();
 
+  const checkCustomerDetails = () => {
+    setOpenLoader(true);
+    dispactch(fetchUserDetailsByBill(customer.customerId)).then((res) => {
+      if (res.error) {
+        console.error('Error fetching customer details:', res.error); 
+        setOpenLoader(false);
+        return;
+      }
+      if (res.payload) {
+        const customerDetails = res.payload; 
+        setCustomerNotes(customerDetails.customerNotes || '');
+        setCustomer({
+          // customerId: customerDetails.id,
+          name: customerDetails.customerName,
+          address: customerDetails.customerAddress,
+          contact: customerDetails.customerPhone || '',
+        });
+        if (customerDetails.billingItems) {
+          setNewItems(customerDetails.billingItems);
+        } else {
+          setNewItems([]);
+        }
+      } else {
+        console.warn('No customer details found for the given ID');
+      }
+
+    }).catch((error) => {
+      console.error('Error fetching customer details:', error);
+    });
+      setOpenLoader(false);
+
+
+    // if (customerDetails) {
+    //   setCustomer({
+    //     customerId: customerDetails.id,
+    //     name: customerDetails.name,
+    //     address: customerDetails.address,
+    //   });
+    // }
+  };
   // Customer Info State
   const [customer, setCustomer] = useState({
     customerId: '',
@@ -75,7 +115,7 @@ const Billing = () => {
   const [billingDetails, setBillingDetails] = useState({
     billingType: '',
     financialYear: '',
-    billingDate: new Date().toISOString().split('T')[0], // Default to today
+    billingDate: new Date().toISOString().split('T')[0],
   });
 
   // Billing Items State
@@ -96,49 +136,34 @@ const Billing = () => {
   };
 
   const handleBillingDetailsChange = (e) => {
-
     setBillingDetails({ ...billingDetails, [e.target.name]: e.target.value });
   };
 
   const handleItemChange = (idx, field, value) => {
     const newItemsArr = items.map((item, i) => {
       if (i !== idx) return item;
-
-      // Ensure all values are numbers
       const getNumber = v =>
         typeof v === 'object' && v !== null && '$numberDecimal' in v
           ? Number(v.$numberDecimal)
           : Number(v) || 0;
-
       let updated = { ...item, [field]: ['quantity', 'unitPrice', 'discount', 'taxPercent', 'tax'].includes(field) ? getNumber(value) : value };
-
-      // Always use numbers for calculations
       updated.unitPrice = getNumber(updated.unitPrice);
       updated.quantity = getNumber(updated.quantity);
       updated.discount = getNumber(updated.discount);
       updated.taxPercent = getNumber(updated.taxPercent);
       updated.tax = getNumber(updated.tax);
-
-      // Calculate tax if taxPercent, unitPrice, or quantity changes
       if (field === 'taxPercent' || field === 'unitPrice' || field === 'quantity') {
         updated.tax = ((updated.unitPrice * updated.quantity * updated.taxPercent) / 100).toFixed(2);
       }
-
-      // If tax is changed directly, update taxPercent accordingly
       if (field === 'tax') {
         updated.taxPercent = updated.unitPrice && updated.quantity
           ? ((updated.tax * 100) / (updated.unitPrice * updated.quantity)).toFixed(2) 
           : 0;
       }
-
-      // Calculate amount: (unitPrice * quantity) + tax - discount
-      updated.amount = updated.unitPrice * updated.quantity + updated.tax - updated.discount;
-
+      updated.amount = updated.unitPrice * updated.quantity + Number(updated.tax) - updated.discount;
       return updated;
     });
     setItems(newItemsArr);
-
-    // For itemName field, filter suggestions
     if (field === 'itemName') {
       const filtered = billingItems && billingItems
         .filter((suggestion) =>
@@ -162,23 +187,17 @@ const Billing = () => {
       typeof v === 'object' && v !== null && '$numberDecimal' in v
         ? Number(v.$numberDecimal)
         : Number(v) || 0;
-
     const newItemsArr = items.map((item, i) => {
       if (i !== idx) return item;
-
       const unitPrice = getNumber(suggestion.unitPrice);
       const quantity = getNumber(suggestion.quantity) || 1;
       const taxPercent = getNumber(suggestion.taxPercent || suggestion.tax_percent || 0);
       let tax = getNumber(suggestion.tax);
-      // If taxPercent is provided, recalculate tax
       if (taxPercent) {
         tax = (unitPrice * quantity * taxPercent) / 100;
       }
       const discount = getNumber(suggestion.discount);
-
-      // Calculate amount: (unitPrice * quantity) + tax - discount
       const amount = unitPrice * quantity + tax - discount;
-
       return {
         ...item,
         billingItems: suggestion._id,
@@ -191,7 +210,6 @@ const Billing = () => {
         amount,
       };
     });
-
     setItems(newItemsArr);
     setItemSuggestions((prev) => ({ ...prev, [idx]: [] }));
   };
@@ -220,7 +238,6 @@ const Billing = () => {
   // Submit Handler (for demo)
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Submit logic here
     const data = {
       userId: customer.customerId,
       plan: billingDetails?.billingType?.name || '',
@@ -240,7 +257,7 @@ const Billing = () => {
       category: billingDetails.financialYear,
       invoiceNumber: `INV-${Date.now()}`,
       invoiceDate: billingDetails.billingDate || new Date(),
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Due date 30 days from now
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
       totalAmount: totalAmount,
       taxAmount: items.reduce((sum, item) => sum + (item.tax || 0), 0),
       discountAmount: items.reduce((sum, item) => sum + (item.discount || 0), 0),
@@ -251,362 +268,467 @@ const Billing = () => {
       paymentReference: '',
       paymentMethodDetails: paymentMethod,
     }
-    console.log('Billing Data:', data); 
     dispactch(addBilling(data)).then((res) => {
       if (res.error) {
         console.error('Error adding billing item:', res.error);
         return;
-      }else {
-        // Reset form after successful submission
+      } else {
         window.location.href = '/list-billings';
       }
     }).catch((error) => {
-      // Handle error, e.g., show an error message
       console.error('Error adding billing item:', error);
     }); 
   };
 
   return (
-    <Box sx={{ width: (screenwidth - 240) + 'px' }}>
-      <Box sx={{ display: 'flex', border: '1px solid #ccc', backgroundColor: '#f5f5f5', padding: '10px', marginBottom: '20px' }}>
-        <Typography variant="h5" color="textSecondary">
+    <Box sx={{
+      width: { xs: '100%', md: (screenwidth - 240) + 'px' },
+      mx: 'auto',
+      mt: 3,
+      p: { xs: 1, sm: 2 }
+    }}>
+      {/* Header */}
+      <Paper sx={{
+        p: 3,
+        mb: 3,
+        background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+        color: '#fff',
+        borderRadius: 3,
+        boxShadow: 4,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexDirection: { xs: 'column', md: 'row' }
+      }}>
+        <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold">
           User Billing Information
         </Typography>
-
-        <TextField
-          label="Billing Date"
-          name="billingDate"
-          type="date"
-          value={billingDetails.billingDate}
-          onChange={handleBillingDetailsChange}
-          fullWidth
-          InputLabelProps={{ shrink: true }}
-          required
-          sx={{ display: 'none', marginLeft: '20px', marginRight: '20px', width: '200px', }}
-        />
-        <Button variant="contained" color="primary" sx={{ marginLeft: 'auto' }} onClick={() => window.location.href = routesName.LISTBILLIS}>
+        <Button
+          variant="contained"
+          color="secondary"
+          sx={{
+            fontWeight: 700,
+            background: 'linear-gradient(90deg, #ff9966 0%, #ff5e62 100%)',
+            color: '#fff',
+            boxShadow: 2,
+            mt: { xs: 2, md: 0 },
+            '&:hover': {
+              background: 'linear-gradient(90deg, #ff5e62 0%, #ff9966 100%)',
+            },
+          }}
+          onClick={() => window.location.href = routesName.LISTBILLIS}
+        >
           Search Billings
         </Button>
-      </Box>
-      <Box sx={{ minWidth: 550 }}>
+      </Paper>
 
-        <form onSubmit={handleSubmit}>
-          {/* Customer Info Section */}
-          <Paper sx={{ mb: 2, }}>
-            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #CECECE', padding: '10px', pt: 2, mb: 2, backgroundColor: '#f5f5f5', height: '20px' }}>
-              <Typography variant="h6" gutterBottom>Customer Info</Typography>
-              <Typography variant="h6" sx={{ textAlign: 'right', justifyContent: 'flex-end' }} gutterBottom>Date: {formatDate(billingDetails.billingDate)}</Typography>
-            </Box>
+      {/* Customer Info Section */}
+      <Paper sx={{
+        mb: 3,
+        p: 3,
+        borderRadius: 3,
+        boxShadow: 2,
+        background: 'rgba(255,255,255,0.97)'
+      }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Customer ID"
+              name="customerId"
+              value={customer.customerId}
+              onChange={handleCustomerChange}
+              onBlur={checkCustomerDetails} // triggers on focus out
+              onKeyDown={e => {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                  checkCustomerDetails();
+                }
+              }}
+              fullWidth
+              required
+              inputProps={{ autoComplete: 'off' }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Name"
+              name="name"
+              value={customer.name}
+              onChange={handleCustomerChange}
+              fullWidth
+              required
+              inputProps={{ autoComplete: 'off' }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Address"
+              name="address"
+              value={customer.address}
+              onChange={handleCustomerChange}
+              fullWidth
+              required
+              inputProps={{ autoComplete: 'off' }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Contact"
+              name="contact"
+              value={customer.contact}
+              onChange={handleCustomerChange}
+              fullWidth
+              required
+              inputProps={{ autoComplete: 'off' }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              select
+              label="Billing Type"
+              name="billingType"
+              value={billingDetails.billingType}
+              onChange={handleBillingDetailsChange}
+              fullWidth
+              required
+              sx={{ width: 180 }}
+              inputProps={{ autoComplete: 'off' }}
+            >
+              {billingCategory && billingCategory.map((type) => (
+                <MenuItem key={type} value={type}>{type?.name}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              select
+              label="Financial Year"
+              name="financialYear"
+              value={billingDetails.financialYear ? billingDetails.financialYear : '2025-26'}
+              onChange={handleBillingDetailsChange}
+              fullWidth
+              required
+              sx={{ width: 180 }}
+              inputProps={{ autoComplete: 'off' }}
+            >
+              {financialYears && financialYears.map((year) => (
+                <MenuItem key={year?._id} value={year?.name}>{year?.name}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Billing Date"
+              name="billingDate"
+              type="date"
+              value={billingDetails.billingDate}
+              onChange={handleBillingDetailsChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              required
+              inputProps={{ autoComplete: 'off' }}
+            />
+          </Grid>
+        </Grid>
+      </Paper>
 
-            <Grid container spacing={2} sx={{ padding: 2 }}>
-              <Grid item xs={12} sm={3}>
-                <TextField label="Customer ID" name="customerId" value={customer.customerId} onChange={handleCustomerChange} fullWidth required />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField label="Name" name="name" value={customer.name} onChange={handleCustomerChange} fullWidth required />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField label="Address" name="address" value={customer.address} onChange={handleCustomerChange} fullWidth required />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField label="Contact" name="contact" value={customer.contact} onChange={handleCustomerChange} fullWidth required />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  select
-                  label="Billing Type"
-                  name="billingType"
-                  value={billingDetails.billingType}
-                  onChange={handleBillingDetailsChange}
-                  fullWidth
-                  required
-                  sx={{ width: 180 }}
-                >
-                  {billingCategory && billingCategory.map((type) => (
-                    <MenuItem key={type} value={type}>{type?.name}</MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-
-            </Grid>
-          </Paper>
-
-          {/* Billing Details Section */}
-          <Paper sx={{ p: 2, mb: 3, display: 'none' }}>
-            <Typography variant="h6" gutterBottom>Billing Details</Typography>
-            <Grid container spacing={2}>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, width: '100%' }}>
-
-
-                <TextField
-                  select
-                  label="Financial Year"
-                  name="financialYear"
-                  value={billingDetails.financialYear ? billingDetails.financialYear : '2025-26'}
-                  onChange={handleBillingDetailsChange}
-                  fullWidth
-                  required
-                  disabled={true}
-                >
-                  {financialYears && financialYears.map((year) => (
-                    <MenuItem key={year?._id} value={year?.name} selected={true} >{year?.name}</MenuItem>
-                  ))}
-                </TextField>
-
-
-              </Box>
-            </Grid>
-          </Paper>
-
-          {/* Billing Items Section */}
-          <Paper sx={{ p: 2, mb: 3, minHeight: 300 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #CECECE', padding: '10px', pt: 2, mb: 2, backgroundColor: '#f5f5f5', height: '20px' }}>
-              <Typography variant="h6" gutterBottom>Billing Details</Typography>
-              <Typography variant="h6" sx={{ textAlign: 'right', justifyContent: 'flex-end' }} gutterBottom>Financial Year: {billingDetails.financialYear ? billingDetails.financialYear : '2025-26'}</Typography>
-            </Box>
-            <TableContainer sx={{ minHeight: 300 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell width={'450rem'}>Item Name</TableCell>
-                    <TableCell width={'60rem'}>Quantity</TableCell>
-                    <TableCell width={'120rem'}>Unit Price</TableCell>
-                    <TableCell width={'80rem'}>Tax %</TableCell> {/* Add this */}
-                    <TableCell width={'80rem'}>Tax</TableCell>
-                    <TableCell width={'80rem'}>Discount</TableCell>
-                    <TableCell width={'60rem'}>Amount</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {items.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell sx={{ position: 'relative' }}>
-                        <TextField
-                          fullWidth
-                          value={item.itemName}
-                          onChange={e => handleItemChange(idx, 'itemName', e.target.value)}
-                          placeholder="Item Name"
-                          size="small"
-                          required
-                          autoComplete="off"
-                          InputProps={{
-                            endAdornment: item.itemName && (
-                              <IconButton
-                                size="small"
-                                onClick={() => handleItemChange(idx, 'itemName', '')}
-                                edge="end"
-                                aria-label="clear"
-                              >
-                                <ClearIcon fontSize="small" />
-                              </IconButton>
-                            ),
-                          }}
-                          onKeyDown={e => {
-                            if (itemSuggestions[idx] && itemSuggestions[idx].length > 0) {
-                              if (e.key === 'ArrowDown') {
-                                e.preventDefault();
-                                setHighlightedSuggestion(prev => ({
-                                  ...prev,
-                                  [idx]: prev[idx] === undefined || prev[idx] === itemSuggestions[idx].length - 1
-                                    ? 0
-                                    : prev[idx] + 1
-                                }));
-                              } else if (e.key === 'ArrowUp') {
-                                e.preventDefault();
-                                setHighlightedSuggestion(prev => ({
-                                  ...prev,
-                                  [idx]: !prev[idx] || prev[idx] === 0
-                                    ? itemSuggestions[idx].length - 1
-                                    : prev[idx] - 1
-                                }));
-                              } else if (e.key === 'Tab' || e.key === 'Enter') {
-                                if (highlightedSuggestion[idx] !== undefined && itemSuggestions[idx][highlightedSuggestion[idx]]) {
-                                  e.preventDefault();
-                                  handleSuggestionClick(idx, itemSuggestions[idx][highlightedSuggestion[idx]]);
-                                  setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }));
-                                }
-                              }
+      {/* Billing Items Section */}
+      <Paper sx={{
+        p: 2,
+        mb: 3,
+        borderRadius: 3,
+        boxShadow: 2,
+        background: 'rgba(255,255,255,0.97)'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
+          alignItems: { xs: 'flex-start', md: 'center' },
+          justifyContent: 'space-between',
+          borderBottom: '1px solid #CECECE',
+          padding: '10px',
+          mb: 2,
+          backgroundColor: '#f5f5f5'
+        }}>
+          <Typography variant="h6" gutterBottom>Billing Details</Typography>
+          <Typography variant="h6" sx={{ textAlign: 'right', justifyContent: 'flex-end' }} gutterBottom>
+            Financial Year: {billingDetails.financialYear ? billingDetails.financialYear : '2025-26'}
+          </Typography>
+        </Box>
+        <TableContainer sx={{ minHeight: 300 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell width={'450rem'}>Item Name</TableCell>
+                <TableCell width={'60rem'}>Quantity</TableCell>
+                <TableCell width={'120rem'}>Unit Price</TableCell>
+                <TableCell width={'80rem'}>Tax %</TableCell>
+                <TableCell width={'80rem'}>Tax</TableCell>
+                <TableCell width={'80rem'}>Discount</TableCell>
+                <TableCell width={'60rem'}>Amount</TableCell>
+                <TableCell>Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.map((item, idx) => (
+                <TableRow key={idx}>
+                  <TableCell sx={{ position: 'relative' }}>
+                    <TextField
+                      fullWidth
+                      value={item.itemName}
+                      onChange={e => handleItemChange(idx, 'itemName', e.target.value)}
+                      placeholder="Item Name"
+                      size="small"
+                      required
+                      autoComplete="off"
+                      InputProps={{
+                        endAdornment: item.itemName && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleItemChange(idx, 'itemName', '')}
+                            edge="end"
+                            aria-label="clear"
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        ),
+                      }}
+                      onKeyDown={e => {
+                        if (itemSuggestions[idx] && itemSuggestions[idx].length > 0) {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setHighlightedSuggestion(prev => ({
+                              ...prev,
+                              [idx]: prev[idx] === undefined || prev[idx] === itemSuggestions[idx].length - 1
+                                ? 0
+                                : prev[idx] + 1
+                            }));
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setHighlightedSuggestion(prev => ({
+                              ...prev,
+                              [idx]: !prev[idx] || prev[idx] === 0
+                                ? itemSuggestions[idx].length - 1
+                                : prev[idx] - 1
+                            }));
+                          } else if (e.key === 'Tab' || e.key === 'Enter') {
+                            if (highlightedSuggestion[idx] !== undefined && itemSuggestions[idx][highlightedSuggestion[idx]]) {
+                              e.preventDefault();
+                              handleSuggestionClick(idx, itemSuggestions[idx][highlightedSuggestion[idx]]);
+                              setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }));
                             }
-                          }}
-                        />
-                        {itemSuggestions[idx] && itemSuggestions[idx].length > 0 && (
-                          console.log('Item Suggestions:', itemSuggestions),
+                          }
+                        }
+                      }}
+                    />
+                    {itemSuggestions[idx] && itemSuggestions[idx].length > 0 && (
+                      <Box
+                        fullWidth
+                        sx={{
+                          position: 'absolute',
+                          zIndex: 10,
+                          background: '#fff',
+                          boxShadow: 2,
+                          borderRadius: 1,
+                          mt: 1,
+                          width: '100%',
+                          maxHeight: 180,
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {itemSuggestions[idx].map((suggestion, sIdx) => (
                           <Box
-                            fullWidth
+                            key={suggestion._id || sIdx}
                             sx={{
-                              position: 'absolute',
-                              zIndex: 10,
-                              background: '#fff',
-                              boxShadow: 2,
-                              borderRadius: 1,
-                              mt: 1,
-                              width: '100%',
-                              maxHeight: 180,
-                              overflowY: 'auto',
+                              px: 2,
+                              py: 1,
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              backgroundColor: highlightedSuggestion[idx] === sIdx ? '#e3f2fd' : '#fff',
+                              '&:hover': { backgroundColor: '#f0f0f0' },
+                            }}
+                            onMouseEnter={() => setHighlightedSuggestion(prev => ({ ...prev, [idx]: sIdx }))}
+                            onMouseLeave={() => setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }))}
+                            onClick={() => {
+                              handleSuggestionClick(idx, suggestion);
+                              setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }));
                             }}
                           >
-                            {itemSuggestions[idx].map((suggestion, sIdx) => (
-
-                              console.log('Suggestion:', suggestion),
-                              <Box
-                                key={suggestion._id || sIdx}
-                                sx={{
-                                  px: 2,
-                                  py: 1,
-                                  cursor: 'pointer',
-                                  borderBottom: '1px solid #eee',
-                                  backgroundColor: highlightedSuggestion[idx] === sIdx ? '#e3f2fd' : '#fff',
-                                  '&:hover': { backgroundColor: '#f0f0f0' },
-                                }}
-                                onMouseEnter={() => setHighlightedSuggestion(prev => ({ ...prev, [idx]: sIdx }))}
-                                onMouseLeave={() => setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }))}
-                                onClick={() => {
-                                  handleSuggestionClick(idx, suggestion);
-                                  setHighlightedSuggestion(prev => ({ ...prev, [idx]: undefined }));
-                                }}
-                              >
-                                {suggestion.name}
-                              </Box>
-                            ))}
+                            {suggestion.name}
                           </Box>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          value={item.quantity}
-                          onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
-                          size="small"
-                          inputProps={{ min: 1 }}
-                          required
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          value={
-                            typeof item.unitPrice === 'object' && item.unitPrice !== null && '$numberDecimal' in item.unitPrice
-                              ? item.unitPrice.$numberDecimal
-                              : item.unitPrice
-                          }
-                          onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)}
-                          size="small"
-                          inputProps={{ min: 0 }}
-                          required
-                        />
-                      </TableCell> 
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          value={item.taxPercent}
-                          onChange={e => handleItemChange(idx, 'taxPercent', e.target.value)}
-                          size="small"
-                          inputProps={{ min: 0 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          value={item.tax}
-                          onChange={e => handleItemChange(idx, 'tax', e.target.value)}
-                          size="small"
-                          inputProps={{ min: 0 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          type="text"
-                          value={item.discount?.$numberDecimal}
-                          onChange={e => handleItemChange(idx, 'discount', e.target.value)}
-                          size="small"
-                          inputProps={{ min: 0 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography>{item.amount.toFixed(2)}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton color="error" onClick={() => handleRemoveItem(idx)} disabled={items.length === 1}>
-                          <RemoveCircleIcon />
-                        </IconButton>
-                        {idx === items.length - 1 && (
-                          <IconButton color="primary" onClick={handleAddItem}>
-                            <AddCircleIcon />
-                          </IconButton>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
+                        ))}
+                      </Box>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      value={item.quantity}
+                      onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
+                      size="small"
+                      inputProps={{ min: 1 }}
+                      required
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      value={
+                        typeof item.unitPrice === 'object' && item.unitPrice !== null && '$numberDecimal' in item.unitPrice
+                          ? item.unitPrice.$numberDecimal
+                          : item.unitPrice
+                      }
+                      onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)}
+                      size="small"
+                      inputProps={{ min: 0 }}
+                      required
+                    />
+                  </TableCell> 
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      value={item.taxPercent}
+                      onChange={e => handleItemChange(idx, 'taxPercent', e.target.value)}
+                      size="small"
+                      inputProps={{ min: 0 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      value={item.tax}
+                      onChange={e => handleItemChange(idx, 'tax', e.target.value)}
+                      size="small"
+                      inputProps={{ min: 0 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      value={item.discount?.$numberDecimal || item.discount}
+                      onChange={e => handleItemChange(idx, 'discount', e.target.value)}
+                      size="small"
+                      inputProps={{ min: 0 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography>{item.amount.toFixed(2)}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton color="error" onClick={() => handleRemoveItem(idx)} disabled={items.length === 1}>
+                      <RemoveCircleIcon />
+                    </IconButton>
+                    {idx === items.length - 1 && (
+                      <IconButton color="primary" onClick={handleAddItem}>
+                        <AddCircleIcon />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-          {/* Billing Summary Section */}
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>Billing Summary</Typography>
-
-            <Box sx={{ flexGrow: 1, display: 'flex', flex: 1, width: '100%', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography variant="subtitle1">
-                Total Amount: <b>₹{totalAmount.toFixed(2)}</b>
-              </Typography>
-              <Typography variant="subtitle1">
-                Total Tax: <b>₹{totalTax? parseFloat(totalTax).toFixed(2): 0}</b>
-              </Typography>
-              <Typography variant="subtitle1">
-                Total Discount: <b>₹{totalDiscount.toFixed(2)}</b>
-              </Typography>
-              <Typography variant="subtitle1" sx={{ mt: 1, alignSelf: 'flex-end', ml: 2 }}>
-                In Words: <i>{numberToWords(Math.floor(totalAmount + totalTax))} Rupees Only</i>
-              </Typography>
-            </Box>
-            <Box sx={{ flexGrow: 1, display: 'flex', flex: 1, width: '100%', flexDirection: 'row', gap: 2, alignItems: 'flex-end' }}>
-              <TextField
-                label="Remark"
-                value={remark}
-                onChange={e => setRemark(e.target.value)}
-                fullWidth
-                multiline
-                rows={2}
-              />
-              <TextField
-                label="Customer Note"
-                value={customerNotes}
-                onChange={e => setCustomerNotes(e.target.value)}
-                fullWidth
-                multiline
-                rows={2}
-                sx={{ mt: 2 }}
-              />
-              <TextField
-                select
-                label="Payment Method"
-                name='paymentMethod'
-                value={paymentMethod}
-                onChange={e => setPaymentMethod(e.target.value)}
-                fullWidth
-                sx={{ mt: 2 }}
-                required
-              >
-                {paymentType && paymentType.map((method) => (
-                  <MenuItem key={method?.paymentType} value={method?.paymentType}>{method?.paymentType}</MenuItem>
-                ))}
-              </TextField>
-            </Box>
-
-          </Paper>
-          <Divider sx={{ mb: 2 }} />
-          <Button type="submit" variant="contained" color="primary" size="large">
+      {/* Billing Summary Section */}
+      <Paper sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 3,
+        boxShadow: 2,
+        background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+        color: '#fff'
+      }}>
+        <Typography variant="h6" gutterBottom>Billing Summary</Typography>
+        <Box sx={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' },
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 2
+        }}>
+          <Box>
+            <Typography variant="subtitle1">
+              Total Amount: <b>₹{totalAmount.toFixed(2)}</b>
+            </Typography>
+            <Typography variant="subtitle1">
+              Total Tax: <b>₹{totalTax ? parseFloat(totalTax).toFixed(2) : 0}</b>
+            </Typography>
+            <Typography variant="subtitle1">
+              Total Discount: <b>₹{totalDiscount.toFixed(2)}</b>
+            </Typography>
+            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+              In Words: <i>{numberToWords(Math.floor(totalAmount + totalTax))} Rupees Only</i>
+            </Typography>
+          </Box>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 2,
+            alignItems: 'flex-end',
+            width: { xs: '100%', md: 'auto' }
+          }}>
+            <TextField
+              label="Remark"
+              value={remark}
+              onChange={e => setRemark(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              sx={{ minWidth: 180 }}
+            />
+            <TextField
+              label="Customer Note"
+              value={customerNotes}
+              onChange={e => setCustomerNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              sx={{ minWidth: 180 }}
+            />
+            <TextField
+              select
+              label="Payment Method"
+              name='paymentMethod'
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value)}
+              fullWidth
+              required
+              sx={{ minWidth: 180 }}
+            >
+              {paymentType && paymentType.map((method) => (
+                <MenuItem key={method?.paymentType} value={method?.paymentType}>{method?.paymentType}</MenuItem>
+              ))}
+            </TextField>
+          </Box>
+        </Box>
+        <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.3)' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="contained" color="secondary" size="large"
+            onClick={handleSubmit}
+            sx={{
+              fontWeight: 700,
+              fontSize: 16,
+              background: 'linear-gradient(90deg, #ff9966 0%, #ff5e62 100%)',
+              color: '#fff',
+              boxShadow: 2,
+              '&:hover': {
+                background: 'linear-gradient(90deg, #ff5e62 0%, #ff9966 100%)',
+              },
+            }}>
             Submit Billing
           </Button>
-        </form>
-      </Box>
+        </Box>
+      </Paper>
+      <Loader open={openLoader}/>
     </Box>
   );
 };

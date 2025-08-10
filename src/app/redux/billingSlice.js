@@ -11,7 +11,20 @@ export const fetchBillingById = createAsyncThunk('billing/fetchBillingById', asy
   const response = await getMethod(apiRoutes.BILLING+`/${billingId}`);
   return response;
 });
-
+export const fetchBillingByUserId = createAsyncThunk('billing/fetchBillingByUserId', async (billingId)=> {
+  const response = await getMethod(apiRoutes.BILLING_BY_USER+`/${billingId}`);
+  return response;
+});
+//fetch billing by date range
+export const fetchBillingByDateRange = createAsyncThunk('billing/fetchBillingByDateRange', async (startDate) => {
+  const response = await getMethod(`${apiRoutes.BILLING_DATE_RANGE}?startDate=${startDate}&endDate=${new Date().toISOString()}`);
+  return response;
+});
+//fetch billing by financial year
+export const fetchBillingByFinancialYear = createAsyncThunk('billing/fetchBillingByFinancialYear', async (financialYear) => {
+  const response = await getMethod(`${apiRoutes.BILLING}?financialYear=${financialYear}`);
+  return response;
+});
 export const addBilling = createAsyncThunk(
   'billing',
   async (billingData) => {
@@ -34,10 +47,18 @@ export const deleteBilling = createAsyncThunk(
         return response; // Assuming the API returns a success message or the deleted item
     }
 );  
+export const fetchUserDetailsByBill = createAsyncThunk(
+  'billing/fetchUserDetailsByBill',
+  async (billingId) => {
+    const response = await getMethod(`${apiRoutes.CUSTOMER_DETAILS}/${billingId}`);
+    return response; // Assuming the API returns the user details associated with the billing
+  }
+);
 const BillingSlice = createSlice({
   name: 'billing',
   initialState: {
     billingData: null,
+    customerDetails: null,
     billings: [],
     addBillings: null,      
     updateBillings: null,
@@ -105,6 +126,18 @@ const BillingSlice = createSlice({
             state.billingData = action.payload;
         })    
         .addCase(fetchBillingById.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+          .addCase(fetchUserDetailsByBill.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchUserDetailsByBill.fulfilled, (state, action) => {
+            state.loading = false;
+            state.customerDetails = action.payload;
+        })
+        .addCase(fetchUserDetailsByBill.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message;
         });

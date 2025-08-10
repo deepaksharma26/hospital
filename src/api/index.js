@@ -52,3 +52,19 @@ export const putMethod = async (url, data) => {
   }
   return response.json();
 }
+
+export const deleteMethod = async (url, data) => {
+  const response = await fetch(apiUrl+url, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `${await getAccessToken()}`,
+      'key': apiKey
+    },
+    body: JSON.stringify(data)
+  }); 
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
