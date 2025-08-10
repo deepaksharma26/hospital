@@ -38,7 +38,7 @@ const Login = () => {
                      setErrorTxt('Please Wait We Are Validating The user...');
                   }else if(res.payload) {
                      setErrorTxt('Login Successful',data); 
-                     window.location.href = '/dashboard'; // Example redirect
+                     window.location.href = '#/dashboard'; // Example redirect
                   } else {
                      setErrorTxt('Invalid Email or Password');
                      emailInput.current.focus();

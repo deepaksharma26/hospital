@@ -1,6 +1,6 @@
 // App.js
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, Router, useRoutes } from 'react-router-dom';
+import { HashRouter, useRoutes } from 'react-router-dom';
 import routesConfig from './routes/index.js';
 import PageLoader from './components/PageLoader.jsx';
 
@@ -10,15 +10,14 @@ function AppRoutes() {
 
 function App() {
   useEffect(() => {
-    // Any global setup can be done here, like setting up a theme or global state
-    document.title = "Thakur Eye Hospital - Billing System"; // Example: Set the document title
+    document.title = "Thakur Eye Hospital - Billing System";
   }, []);
   return (
-    <BrowserRouter> 
-        <Suspense fallback={<PageLoader />}>
-          <AppRoutes />
-        </Suspense> 
-    </BrowserRouter>
+    <HashRouter>
+      <Suspense fallback={<PageLoader />}>
+        <AppRoutes />
+      </Suspense>
+    </HashRouter>
   );
 }
 
