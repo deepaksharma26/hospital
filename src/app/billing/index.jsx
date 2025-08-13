@@ -16,6 +16,7 @@ import { addBilling, fetchUserDetailsByBill } from '../redux/billingSlice';
 import { routesName } from '../constants/routesName';
 import PageLoader from '../../components/PageLoader';
 import { Loader } from '../../components/loader';
+import { useNavigate } from 'react-router-dom';
 
 function numberToWords(num) {
   if (num === 0) return 'Zero';
@@ -69,15 +70,16 @@ const Billing = () => {
       if (res.error) {
         console.error('Error fetching customer details:', res.error); 
         setOpenLoader(false);
+        // Do NOT clear customerId here!
         return;
       }
       if (res.payload) {
         const customerDetails = res.payload; 
         setCustomerNotes(customerDetails.customerNotes || '');
         setCustomer({
-          // customerId: customerDetails.id,
-          name: customerDetails.customerName,
-          address: customerDetails.customerAddress,
+          customerId: customer.customerId, // <-- keep the entered value
+          name: customerDetails.customerName || '',
+          address: customerDetails.customerAddress || '',
           contact: customerDetails.customerPhone || '',
         });
         if (customerDetails.billingItems) {
@@ -86,22 +88,19 @@ const Billing = () => {
           setNewItems([]);
         }
       } else {
-        console.warn('No customer details found for the given ID');
+        // No customer found, keep the entered customerId
+        setCustomer({
+          ...customer,
+          name: '',
+          address: '',
+          contact: '',
+        });
       }
-
+      setOpenLoader(false);
     }).catch((error) => {
       console.error('Error fetching customer details:', error);
-    });
       setOpenLoader(false);
-
-
-    // if (customerDetails) {
-    //   setCustomer({
-    //     customerId: customerDetails.id,
-    //     name: customerDetails.name,
-    //     address: customerDetails.address,
-    //   });
-    // }
+    });
   };
   // Customer Info State
   const [customer, setCustomer] = useState({
@@ -129,7 +128,7 @@ const Billing = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [itemSuggestions, setItemSuggestions] = useState({});
   const [highlightedSuggestion, setHighlightedSuggestion] = useState({});
-
+  const navigate = useNavigate();
   // Handlers
   const handleCustomerChange = (e) => {
     setCustomer({ ...customer, [e.target.name]: e.target.value });
@@ -273,7 +272,8 @@ const Billing = () => {
         console.error('Error adding billing item:', res.error);
         return;
       } else {
-        window.location.href = '/list-billings';
+        navigate(routesName.LISTBILLIS);
+        // window.location.href = '/list-billings';
       }
     }).catch((error) => {
       console.error('Error adding billing item:', error);
@@ -282,10 +282,10 @@ const Billing = () => {
 
   return (
     <Box sx={{
-      width: { xs: '100%', md: (screenwidth - 240) + 'px' },
+      width: { xs: '100%'},
       mx: 'auto',
       mt: 3,
-      p: { xs: 1, sm: 2 }
+      p: { xs: 1, sm: 0 }
     }}>
       {/* Header */}
       <Paper sx={{
@@ -300,7 +300,7 @@ const Billing = () => {
         justifyContent: 'space-between',
         flexDirection: { xs: 'column', md: 'row' }
       }}>
-        <Typography variant={isMobile ? "h6" : "h4"} fontWeight="bold">
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
           User Billing Information
         </Typography>
         <Button
@@ -316,7 +316,7 @@ const Billing = () => {
               background: 'linear-gradient(90deg, #ff5e62 0%, #ff9966 100%)',
             },
           }}
-          onClick={() => window.location.href = routesName.LISTBILLIS}
+          onClick={() => navigate(routesName.LISTBILLIS)}
         >
           Search Billings
         </Button>
@@ -345,41 +345,16 @@ const Billing = () => {
               }}
               fullWidth
               required
-              inputProps={{ autoComplete: 'off' }}
             />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <TextField
-              label="Name"
-              name="name"
-              value={customer.name}
-              onChange={handleCustomerChange}
-              fullWidth
-              required
-              inputProps={{ autoComplete: 'off' }}
-            />
+            <TextField label="Name" name="name" value={customer.name} onChange={handleCustomerChange} fullWidth required />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <TextField
-              label="Address"
-              name="address"
-              value={customer.address}
-              onChange={handleCustomerChange}
-              fullWidth
-              required
-              inputProps={{ autoComplete: 'off' }}
-            />
+            <TextField label="Address" name="address" value={customer.address} onChange={handleCustomerChange} fullWidth required />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <TextField
-              label="Contact"
-              name="contact"
-              value={customer.contact}
-              onChange={handleCustomerChange}
-              fullWidth
-              required
-              inputProps={{ autoComplete: 'off' }}
-            />
+            <TextField label="Contact" name="contact" value={customer.contact} onChange={handleCustomerChange} fullWidth required />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField
@@ -391,7 +366,6 @@ const Billing = () => {
               fullWidth
               required
               sx={{ width: 180 }}
-              inputProps={{ autoComplete: 'off' }}
             >
               {billingCategory && billingCategory.map((type) => (
                 <MenuItem key={type} value={type}>{type?.name}</MenuItem>
@@ -408,7 +382,6 @@ const Billing = () => {
               fullWidth
               required
               sx={{ width: 180 }}
-              inputProps={{ autoComplete: 'off' }}
             >
               {financialYears && financialYears.map((year) => (
                 <MenuItem key={year?._id} value={year?.name}>{year?.name}</MenuItem>
@@ -425,7 +398,6 @@ const Billing = () => {
               fullWidth
               InputLabelProps={{ shrink: true }}
               required
-              inputProps={{ autoComplete: 'off' }}
             />
           </Grid>
         </Grid>

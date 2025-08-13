@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBillingByDateRange, fetchBillingById, fetchBillingList } from '../redux/billingSlice';
+import { fetchBillingByDateRange, fetchBillingById, fetchBillingByUserId, fetchBillingList } from '../redux/billingSlice';
 import { routesName } from '../constants/routesName';
 import { DataGrid } from '@mui/x-data-grid';
 import { Loader } from '../../components/loader';
@@ -52,8 +52,7 @@ const ListAllBilling = () => {
   const [customerId, setCustomerId] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [financialYear, setFinancialYear] = useState('');
-  const [filteredRows, setFilteredRows] = useState([]);
-
+  const [filteredRows, setFilteredRows] = useState([]); 
   // For financial year dropdown
   const financialYearList = Array.from(
     new Set(billings.map(b => b.category || b.financialYear || '').filter(Boolean))
@@ -168,7 +167,7 @@ const ListAllBilling = () => {
             variant="outlined"
             color="warning"
             size="small"
-            onClick={() => window.open(`${routesName.EDITBILLING}/${e.row._id}`, '_blank')}
+            onClick={() => navigate(`${routesName.EDITBILLING}/${e.row._id}`)}
             sx={{ fontWeight: 600 }}
           >
             Modify
@@ -214,16 +213,16 @@ const ListAllBilling = () => {
     setPrintData(e);
   };
   const searchBillByID = () => {
-    if (customerId) {
-        dispatch(fetchBillingById(customerId)).then((res) => {
+    const { from, to } = getDateRange(dateFilter, financialYear);
+    if (customerId && !from && !to ) {
+        dispatch(fetchBillingByUserId(customerId)).then((res) => {
           if (res.payload.length === 0) {
             alert('No billing found for this Customer ID');
           } else {
             setFilteredRows(res.payload);
           }
         });
-    } else {
-      const { from, to } = getDateRange(dateFilter, financialYear);
+    } else {  
       dispatch(fetchBillingByDateRange(new Date(from).toISOString(), new Date().toISOString())).then((res) => {
         if (res.payload.length === 0) {
           alert('No billing found for this date range');
@@ -233,12 +232,18 @@ const ListAllBilling = () => {
       }); 
     }
   };
+  const handleRefresh = () => {
+    setOpen(true);
+    dispatch(fetchBillingList()).then(() => {
+      setOpen(false);
+    });
+  };
   return (
     <>
       {printData ? 
         <BillPrint bill={printData} onClose={() => setPrintData(null)} /> 
         : 
-        <Box sx={{ width: '100%', p: { xs: 1, sm: 2 } }}>
+        <Box sx={{ width: '100%' }}>
           {/* Filters */}
           <Paper sx={{
             display: 'flex',
@@ -355,7 +360,7 @@ const ListAllBilling = () => {
                   boxShadow: 2,
                   width: { xs: '100%', sm: 'auto' }
                 }}
-                onClick={() => dispatch(fetchBillingList({}))}
+                onClick={() => handleRefresh()}
               >
                 Refresh
               </Button>
@@ -369,7 +374,7 @@ const ListAllBilling = () => {
                   boxShadow: 2,
                   width: { xs: '100%', sm: 'auto' }
                 }}
-                onClick={() => window.location.href = routesName.BILLING}
+                onClick={() => navigate(routesName.BILLING)}
               >
                 Add New Billing
               </Button>
@@ -396,7 +401,7 @@ const ListAllBilling = () => {
               borderRadius: 3,
               boxShadow: 3,
               p: { xs: 1, sm: 2 },
-              ml: { xs: 0, sm: 10 },
+              ml: { xs: 0, sm: 2 },
               background: 'rgba(255,255,255,0.97)'
             }}>
               <DataGrid
@@ -420,6 +425,15 @@ const ListAllBilling = () => {
                   },
                 }}
                 autoHeight
+                slots={{
+                  noRowsOverlay: () => (
+                    <Box sx={{ p: 4, textAlign: 'center', width: '100%' }}>
+                      <Typography variant="h6" color="text.secondary">
+                        No data found
+                      </Typography>
+                    </Box>
+                  ),
+                }}
               />
             </Paper>
           </Grid>

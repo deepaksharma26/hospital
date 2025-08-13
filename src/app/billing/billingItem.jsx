@@ -262,13 +262,7 @@ const BillingItem = () => {
         </Typography>
         <Button variant="contained" color="primary" sx={{ marginLeft: 'auto' }} onClick={() => dispatch(fetchBillingItems({}))}>
           Refresh
-        </Button>
-        {/* <Button variant="contained" color="secondary" sx={{ marginLeft: '10px' }} onClick={() => window.location.href = routesName.BILLING}>
-          Add New Billing
-        </Button>
-        <Button variant="contained" color="success" sx={{ marginLeft: '10px' }} onClick={() => exportBillings()}>
-          Export Billings Items
-        </Button> */}
+        </Button> 
       </Box>
       <Box sx={{ maxWidth: 1100, mx: 'auto', mt: 4, p: { xs: 1, sm: 2 } }}>
         <Paper

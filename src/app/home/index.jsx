@@ -16,6 +16,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
+import { useNavigate } from "react-router-dom";
 
 const pieData = [
   { name: "Consultation", value: 4000 },
@@ -30,9 +31,10 @@ const Home = ({ element }) => {
   const [printData, setPrintData] = useState(false);
   const { dashboardData } = useSelector((state) => state.dashboard);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   useEffect(() => {
-    if (isTokenExpired()) {
-      window.location.href = '/login';
+    if (isTokenExpired()) { 
+      navigate('/');
     }
     dispatch(fetchDashboardData()); 
   }, []);
@@ -165,62 +167,105 @@ const Home = ({ element }) => {
     };
     
     return (
-      <Grid container sx={{ml:'64px'}}>
+      <Grid container sx={{ width: '100%', m: 0, p: 0, overflow: 'hidden' }}>
+        
         <Grid item xs={12}>
-          <Header />
-        </Grid>
-        <Grid item xs={12}>
-          <Box sx={{ flexGrow: 1, padding: '20px' }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              p: { xs: 1, sm: 2, md: 3 },
+              width: '100%',
+              maxWidth: '100vw',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+            }}
+          >
             {/* Attractive Heading and Welcome */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexDirection: 'column' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 3,
+                flexDirection: 'column',
+                width: '100%',
+                overflow: 'hidden',
+              }}
+            >
               <Box>
-                <Typography variant="h3" fontWeight="bold" sx={{ background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Welcome to Thakur Eye Hospital Billing Dashboard
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
-                  Manage your billing, patients, and reports efficiently.
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  sx={{
+                    background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textAlign: 'center',
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  Thakur Eye Hospital Billing Dashboard
                 </Typography>
               </Box>
               {/* Card Tiles */}
-              <Box sx={{ display: 'flex', gap: 2, mt:4, mb:4 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: { xs: 1, sm: 2 },
+                  mt: 4,
+                  mb: 4,
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  width: '100%',
+                }}
+              >
                 {cardData.map((card, idx) => (
-                  <Card key={idx} sx={{
-                    minWidth: 180,
-                    color: '#fff',
-                    background: card.gradient,
-                    boxShadow: 3,
-                    borderRadius: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    px: 2,
-                    py: 2,
-                  }}>
+                  <Card
+                    key={idx}
+                    sx={{
+                      minWidth: 160,
+                      maxWidth: 220,
+                      color: '#fff',
+                      background: card.gradient,
+                      boxShadow: 3,
+                      borderRadius: 3,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      px: 2,
+                      py: 2,
+                      m: 1,
+                      flex: '1 1 160px',
+                    }}
+                  >
                     <Box sx={{ mb: 1 }}>{card.icon}</Box>
-                    <Typography variant="subtitle2" sx={{ opacity: 0.9 }}>{card.title}</Typography>
-                    <Typography variant="h5" fontWeight="bold">{card.value}</Typography>
+                    <Typography variant="subtitle2" sx={{ opacity: 0.9, textAlign: 'center' }}>
+                      {card.title}
+                    </Typography>
+                    <Typography variant="h5" fontWeight="bold">
+                      {card.value}
+                    </Typography>
                   </Card>
                 ))}
-              
               </Box>
-              
             </Box>
-            
+
             {/* Data Table and Pie Chart Rows */}
-            <Grid container spacing={3}>
+            <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
               {/* Data Table */}
               <Grid item xs={12} md={7}>
-                <Paper sx={{ p: 2, boxShadow: 2 }}>
+                <Paper sx={{ p: 2, boxShadow: 2, overflow: 'hidden' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                     Today's Last 10 Billed Report
                   </Typography>
-                  <div style={{ height: 320, width: '100%' }}>
+                  <Box sx={{ height: 320, width: '100%', overflow: 'hidden' }}>
                     <DataGrid
                       rows={
                         (dashboardData?.last10 || []).map((row, idx) => ({
                           ...row,
-                          id: row.id ?? row._id ?? idx + 1 // Use existing id, _id, or fallback to index+1
+                          id: row.id ?? row._id ?? idx + 1,
                         }))
                       }
                       columns={columns}
@@ -228,13 +273,18 @@ const Home = ({ element }) => {
                       rowsPerPageOptions={[5, 10, 20]}
                       disableSelectionOnClick
                       hideFooterSelectedRowCount
+                      sx={{
+                        border: 0,
+                        '.MuiDataGrid-virtualScroller': { overflow: 'hidden !important' },
+                        '.MuiDataGrid-main': { overflow: 'hidden !important' },
+                      }}
                     />
-                  </div>
+                  </Box>
                 </Paper>
               </Grid>
               {/* Pie Chart */}
               <Grid item xs={12} md={5}>
-                <Paper sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+                <Paper sx={{ p: 2, boxShadow: 2, height: '100%', overflow: 'hidden' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                     Month Report (Revenue by Category)
                   </Typography>

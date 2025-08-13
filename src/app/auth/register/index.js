@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../../../app/redux/registerSlice'; // Assuming you have a registerSlice
 import { checkvalidEmail, checkvalidPassword } from '../../../utills';
 import { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -22,6 +23,7 @@ const Register = () => {
     const confirmPasswordInput = useRef(null); 
     const { data, loading, error } = useSelector((state) => state.register);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const handleSubmit = (e) => {
         e.preventDefault();
         const isValidEmail = checkvalidEmail(email);
@@ -78,7 +80,9 @@ const Register = () => {
                         setErrorTxt('Please Wait We Are Registering The user...');
                     } else {
                         setErrorTxt('Registration Successful');
-                        window.location.href = '/login'; // Redirect to login page after successful registration
+                        setTimeout(() => {
+                            navigate('/');
+                        }, 2000);
                     }
                 });
         }

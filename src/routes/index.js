@@ -19,6 +19,7 @@ const BillingList = React.lazy(() => import('../app/billing/listAllBilling')); /
 const BillingEdit = React.lazy(() => import('../app/billing/editBilling')); // Lazy load the billing edit component
 const BillingCategory = React.lazy(() => import('../app/billingCategory/index')); // Lazy load the billing category component
 const BillingPrint = React.lazy(() => import('../app/billing/BillPrint')); // Lazy load the billing print component 
+const SalesReport = React.lazy(() => import('../app/report/SalesReport')); // Lazy load the sales report component
 const routesConfig = [
   {
     path: '/',
@@ -83,10 +84,10 @@ const routesConfig = [
         path: routesName.BILLING_CATEGORY,
         element: <Dashboard element={<BillingCategory />} />, // Assuming you have a component for billing
       },
-      // {
-      //   path: routesName.BILLING_PRINT + '/:billingId',
-      //   element: <Dashboard element={<BillingPrint />} />,
-      // }
+      {
+        path: routesName.SALES_REPORT ,
+        element: <Dashboard element={<SalesReport />} />,
+      }
     ]
   },
 

@@ -14,7 +14,7 @@ import { fetchFinancialYear } from '../redux/financialYearSlice';
 import { fetchBillingItems } from '../redux/billingItemsSlice';
 import { updateBilling, fetchBillingById } from '../redux/billingSlice';
 import { routesName } from '../constants/routesName';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 function numberToWords(num) {
   if (num === 0) return 'Zero';
@@ -74,7 +74,7 @@ const EditBilling = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [itemSuggestions, setItemSuggestions] = useState({});
   const [highlightedSuggestion, setHighlightedSuggestion] = useState({});
-
+  const navigate = useNavigate();
   useEffect(() => {
     dispatch(fetchBillingById(billingId)).then((res) => {
       if (res.error) {
@@ -256,7 +256,9 @@ const EditBilling = () => {
         console.error('Error updating billing item:', res.error);
         return;
       } else {
-        window.location.href = '/list-billings';
+        setTimeout(() => {
+          navigate(routesName.LISTBILLIS);
+        }, 1000); 
       }
     }).catch((error) => {
       console.error('Error adding billing item:', error);
@@ -283,7 +285,7 @@ const EditBilling = () => {
         justifyContent: 'space-between',
         flexDirection: { xs: 'column', md: 'row' }
       }}>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h5" fontWeight="bold">
           Edit Billing Information
         </Typography>
         <Button
@@ -299,7 +301,7 @@ const EditBilling = () => {
               background: 'linear-gradient(90deg, #ff5e62 0%, #ff9966 100%)',
             },
           }}
-          onClick={() => window.location.href = routesName.LISTBILLIS}
+          onClick={() => navigate(routesName.LISTBILLIS)}
         >
           Search Billings
         </Button>
@@ -693,6 +695,7 @@ const EditBilling = () => {
         <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.3)' }} />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="submit" variant="contained" color="secondary" size="large"
+            onClick={handleSubmit}
             sx={{
               fontWeight: 700,
               fontSize: 16,

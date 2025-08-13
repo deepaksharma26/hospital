@@ -11,6 +11,7 @@ import paymentTypeSlice from '../redux/paymentTypeSlice';
 import billingItemSlice from '../redux/billingItemsSlice'; 
 import billingSlice from '../redux/billingSlice'; // Assuming you have a billingSlice
 import dashboardSlice from '../redux/dashboardSlice'; // Assuming you have a dashboardSlice
+import reportSlice from '../redux/reportSlice'; // Assuming you have a reportSlice
 const store = configureStore({
   reducer: {
     users: userReducer,
@@ -25,6 +26,7 @@ const store = configureStore({
     billingItems: billingItemSlice, // Assuming you have a billingItemsSlice imported
     billing: billingSlice, // Assuming you have a billingSlice imported
     dashboard: dashboardSlice, // Assuming you have a dashboardSlice imported
+    report: reportSlice, // Assuming you have a reportSlice imported
   },
 });
 

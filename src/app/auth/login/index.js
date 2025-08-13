@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Card, Typography, TextField, Button, CircularProgress } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { checkvalidEmail, checkvalidPassword } from '../../../utills';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers } from './../../../app/redux/userSlice';
@@ -13,6 +13,7 @@ const Login = () => {
     const { data, loading, error } = useSelector((state) => state.users);
     const emailInput = useRef(null);
     const passwordInput = useRef(null);
+    const navigate = useNavigate();
   useEffect(() => {
     
   }, [dispatch]);
@@ -37,8 +38,11 @@ const Login = () => {
                   }if(loading){
                      setErrorTxt('Please Wait We Are Validating The user...');
                   }else if(res.payload) {
-                     setErrorTxt('Login Successful',data); 
-                     window.location.href = '#/dashboard'; // Example redirect
+                     setErrorTxt('Login Successful'); 
+                     setTimeout(() => {
+                        navigate('/dashboard');
+                     }, 2000);
+                     
                   } else {
                      setErrorTxt('Invalid Email or Password');
                      emailInput.current.focus();

@@ -109,11 +109,10 @@ const BillingCategory = () => {
             field: 'description', headerName:'Description', flex: 2, minWidth: 220
         },
         {
-            field: 'isActive', headerName: 'Status', flex: 2, minWidth: 220,
+            field: 'isActive', headerName: 'Status', flex: 2, minWidth: 120,
             renderCell: (params) => (
                 <Switch
                     checked={params.row.isActive}
-                    // onChange={() => handleStatusChange(params.row)}
                     color={params.row.isActive ? 'success' : 'error'}
                 />
             )
@@ -137,24 +136,47 @@ const BillingCategory = () => {
     ];
 
     return (
-        <>
-            <Box sx={{ display: 'flex', border: '1px solid #ccc', backgroundColor: '#f5f5f5', padding: '10px' }}>
-                <Typography variant="h5" color="textSecondary">
-                   Manage Billings Categories
+        <Box sx={{ width: '100%', minHeight: '100vh', background: '#f8fafc', py: { xs: 1, sm: 3 } }}>
+            {/* Header Section */}
+            <Paper
+                elevation={4}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    p: { xs: 2, sm: 3 },
+                    mb: 4,
+                    borderRadius: 3,
+                    background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+                    color: '#fff',
+                    boxShadow: 6,
+                }}
+            >
+                <Typography variant="h5" fontWeight="bold" sx={{ letterSpacing: 1 }}>
+                    🗂️ Manage Billing Categories
                 </Typography>
-                <Button variant="contained" color="primary" sx={{ marginLeft: 'auto' }} onClick={() => dispatch(fetchBillingCategories({}))}>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    sx={{
+                        fontWeight: 700,
+                        background: 'linear-gradient(90deg, #ff9966 0%, #ff5e62 100%)',
+                        color: '#fff',
+                        boxShadow: 2,
+                        ml: 'auto',
+                        '&:hover': {
+                            background: 'linear-gradient(90deg, #ff5e62 0%, #ff9966 100%)',
+                        },
+                    }}
+                    onClick={() => dispatch(fetchBillingCategories({}))}
+                >
                     Refresh
                 </Button>
-                {/* <Button variant="contained" color="secondary" sx={{ marginLeft: '10px' }} onClick={() => window.location.href = routesName.BILLING}>
-                            Add New Billing
-                        </Button> */}
-                {/* <Button variant="contained" color="success" sx={{ marginLeft: '10px' }} onClick={() => exportBillings()}>
-                            Export Billings
-                        </Button> */}
-            </Box>
+            </Paper>
 
-            <Box sx={{ maxWidth: 900, mx: 'auto', p: { xs: 1, sm: 2 } }}>
-
+            {/* Form Section */}
+            <Box sx={{ maxWidth: 900, mx: 'auto', p: { xs: 1, sm: 2 }, width: '100%' }}>
                 <Paper
                     sx={{
                         p: 3,
@@ -165,7 +187,7 @@ const BillingCategory = () => {
                         boxShadow: 4,
                     }}
                 >
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
                         {editId ? 'Update Billing Category' : 'Create Billing Category'}
                     </Typography>
                     <form onSubmit={handleSubmit}>
@@ -179,9 +201,13 @@ const BillingCategory = () => {
                                     fullWidth
                                     required
                                     variant="filled"
+                                    InputProps={{
+                                        style: { background: 'rgba(255,255,255,0.15)', borderRadius: 8, color: '#fff', fontWeight: 600 }
+                                    }}
+                                    InputLabelProps={{
+                                        style: { color: '#fff' }
+                                    }}
                                     sx={{
-                                        background: 'rgba(255,255,255,0.15)',
-                                        borderRadius: 1,
                                         input: { color: '#fff', fontWeight: 600 },
                                         label: { color: '#fff' }
                                     }}
@@ -195,9 +221,13 @@ const BillingCategory = () => {
                                     onChange={handleChange}
                                     fullWidth
                                     variant="filled"
+                                    InputProps={{
+                                        style: { background: 'rgba(255,255,255,0.15)', borderRadius: 8, color: '#fff' }
+                                    }}
+                                    InputLabelProps={{
+                                        style: { color: '#fff' }
+                                    }}
                                     sx={{
-                                        background: 'rgba(255,255,255,0.15)',
-                                        borderRadius: 1,
                                         input: { color: '#fff' },
                                         label: { color: '#fff' }
                                     }}
@@ -233,8 +263,15 @@ const BillingCategory = () => {
                     </form>
                 </Paper>
 
-                <Paper sx={{ p: 2, borderRadius: 3, boxShadow: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                {/* Data Table Section */}
+                <Paper sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    boxShadow: 2,
+                    background: '#fff',
+                    mb: 4,
+                }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#185a9d' }}>
                         Billing Categories
                     </Typography>
                     <div style={{ width: '100%', minHeight: 350 }}>
@@ -290,8 +327,8 @@ const BillingCategory = () => {
                     </Alert>
                 </Snackbar>
             </Box>
-        </>
+        </Box>
     );
 };
 
-export default BillingCategory
+export default BillingCategory;

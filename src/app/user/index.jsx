@@ -257,7 +257,7 @@ const ListAllUsers = () => {
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     const columns = [
-        { field: 'id', headerName: 'ID', width: 90 },
+        { field: 'id', headerName: 'ID', width: 40 },
         { field: 'firstname', headerName: 'First Name', width: 150 },
         { field: 'lastname', headerName: 'Last Name', width: 150 },
         { field: 'email', headerName: 'Email', width: 150 },
@@ -279,7 +279,7 @@ const ListAllUsers = () => {
                     <Button label="Modify" variant="outlined" color={e.row?.status == 'Active' ? 'success' : 'error'} onClick={() => markActive(e)} sx={{ marginLeft: 1 }}>{e.row?.status == 'Active' ? 'InActive' : 'Activate'}</Button>
                 </>
             ),
-            headerName: 'Modify', width: 280
+            headerName: 'Modify', width:230
         },
     ];
     const paginationModel = { pageSize: 5, page: 0 };
@@ -324,33 +324,116 @@ const ListAllUsers = () => {
     };
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Box sx={{ display: 'flex', border: '1px solid #ccc', backgroundColor: '#f5f5f5', padding: '10px', marginBottom: '20px' }}>
-                <Typography variant="h5" color="textSecondary">
-                    List of All Users
+        <Box sx={{ width: '100%', background: '#f8fafc', minHeight: '100vh' }}>
+            {/* Heading and Actions */}
+            <Paper
+                elevation={3}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    p: { xs: 2, sm: 3 },
+                    mb: 3,
+                    borderRadius: 3,
+                    background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+                    color: '#fff',
+                    boxShadow: 4,
+                }}
+            >
+                <Typography variant="h5" fontWeight="bold" sx={{ letterSpacing: 1 }}>
+                    👤 List of All Users
                 </Typography>
-                <Button variant="contained" color="primary" sx={{ marginLeft: 'auto' }} onClick={() => dispatch(fetchUsersList({}))}>
-                    Refresh
-                </Button>
-                <Button variant="contained" color="secondary" sx={{ marginLeft: '10px' }} onClick={handleOpenForm}>
-                    Add User
-                </Button>
-                <Button variant="contained" color="success" sx={{ marginLeft: '10px' }} onClick={() => exportUsers()}>
-                    Export Users
-                </Button>
-            </Box>
+                <Box sx={{ display: 'flex', gap: 2, mt: { xs: 2, sm: 0 } }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => dispatch(fetchUsersList({}))}
+                        sx={{
+                            fontWeight: 700,
+                            background: 'linear-gradient(90deg, #11998e 0%, #38ef7d 100%)',
+                            color: '#fff',
+                            boxShadow: 2,
+                            '&:hover': {
+                                background: 'linear-gradient(90deg, #38ef7d 0%, #11998e 100%)',
+                            },
+                        }}
+                    >
+                        Refresh
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={handleOpenForm}
+                        sx={{
+                            fontWeight: 700,
+                            background: 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)',
+                            color: '#fff',
+                            boxShadow: 2,
+                            '&:hover': {
+                                background: 'linear-gradient(90deg, #ffd200 0%, #f7971e 100%)',
+                            },
+                        }}
+                    >
+                        Add User
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        onClick={exportUsers}
+                        sx={{
+                            fontWeight: 700,
+                            background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+                            color: '#fff',
+                            boxShadow: 2,
+                            '&:hover': {
+                                background: 'linear-gradient(90deg, #185a9d 0%, #43cea2 100%)',
+                            },
+                        }}
+                    >
+                        Export Users
+                    </Button>
+                </Box>
+            </Paper>
+
+            {/* Data Table */}
             <Grid item xs={12} sx={{ justifyContent: 'center', display: 'flex', marginTop: '20px' }}>
-                <Paper sx={{ width: '100%' }}>
+                <Paper
+                    elevation={2}
+                    sx={{
+                        width: '100%',
+                        borderRadius: 3,
+                        boxShadow: 2,
+                        p: { xs: 1, sm: 2 },
+                        background: '#fff',
+                        overflow: 'hidden',
+                    }}
+                >
                     <DataGrid
                         rows={safeRows}
                         columns={columns}
                         initialState={{ pagination: { paginationModel } }}
-                        pageSizeOptions={[5, 10]}
-                        sx={{ border: 0, width: '100%' }}
+                        pageSizeOptions={[5, 10, 20, 50, 100]}
+                        sx={{
+                            border: 0,
+                            width: '100%',
+                            fontSize: { xs: '0.9rem', sm: '1rem' },
+                            '.MuiDataGrid-columnHeaders': {
+                                background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+                                // color: '#fff',
+                                fontWeight: 700,
+                                fontSize: '1rem',
+                            },
+                            '.MuiDataGrid-row:hover': {
+                                background: 'rgba(67,206,162,0.08)',
+                                transition: 'background 0.2s',
+                            },
+                        }}
                     />
                 </Paper>
             </Grid>
 
+            {/* User Form Dialog */}
             <UserFormDialog
                 open={formDialogOpen}
                 handleClose={() => setFormDialogOpen(false)}
@@ -361,13 +444,15 @@ const ListAllUsers = () => {
                 isEdit={isEdit}
             />
 
+            {/* Snackbar for feedback */}
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                     {snackbar.message}
                 </Alert>
-            </Snackbar> 
+            </Snackbar>
             <Loader open={open} />
         </Box>
     );
-}
+};
+
 export default ListAllUsers;

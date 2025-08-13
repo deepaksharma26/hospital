@@ -30,3 +30,37 @@ export const getUsernameFromToken = () => {
   const payload = JSON.parse(atob(token.split('.')[1])); 
   return payload?.data?.firstname +' '+ payload?.data?.lastname|| null; // Assuming the username is stored in the token payload
 }
+export const getUserIdFromToken = () => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return null;
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  return payload?.data?.email || null; // Assuming the user ID is stored in
+}
+//session timeout 
+export const validatePassword = (password) => {
+  // Check if password is at least 8 characters long
+  if (password.length < 8) return false;
+  // Check if password contains at least one number
+  if (!/\d/.test(password)) return false;
+  // Check if password contains at least one special character
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false;
+  return true; // Password is valid
+}
+
+export const clearSessionTimeout = () => {
+  return localStorage.removeItem('sessionTimeout');
+}
+export const isSessionTimeout = () => {
+  return localStorage.getItem('sessionTimeout') === 'true';
+}
+export const getSessionTimeout = () => {
+  return localStorage.getItem('sessionTimeout');
+}
+export const setSessionTimeout = (timeout) => {
+  return localStorage.setItem('sessionTimeout', timeout);
+}
+export const clearSession = () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('sessionTimeout');
+  // Add any other session-related cleanup here
+}

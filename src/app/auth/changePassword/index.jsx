@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePassword } from '../../redux/changePasswordSlice';
 import { Box, Card, Typography, TextField, Button } from '@mui/material';
-import { Link } from 'react-router-dom'; // Import Link for navigation
+import { Link, useNavigate } from 'react-router-dom'; // Import Link for navigation
 
 const ChangePassword = () => {
     const [currentPassword, setCurrentPassword] = React.useState('');
@@ -10,6 +10,7 @@ const ChangePassword = () => {
     const [confirmPassword, setConfirmPassword] = React.useState('');
     const [errorTxt, setErrorTxt] = React.useState('');
     const dispatch = useDispatch();
+    const navigate = useNavigate(); // Use useNavigate for programmatic navigation
     const { data, loading, error } = useSelector((state) => state.users);
     const handleChangePassword = (e) => {
         e.preventDefault();
@@ -26,7 +27,9 @@ const ChangePassword = () => {
                 setErrorTxt('Please wait, we are processing your request...');
             } else if (data) {
                 setErrorTxt('Password changed successfully');
-                window.location.href = '/login'; // Redirect to login page after successful change
+                setTimeout(() => {
+                    navigate('/');
+                }, 2000);
             } else {
                 setErrorTxt('Error changing password. Please try again.');
             }

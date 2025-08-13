@@ -18,5 +18,6 @@ export const routesName ={
   BILLING_LIST: '/billing-list',
   BILLING_ITEM_EDIT: '/billing-item-edit/:billingItemId',
   BILLING_ITEM_LIST: '/billing-item-list',
+  SALES_REPORT: 'report/sales',
   
 };  

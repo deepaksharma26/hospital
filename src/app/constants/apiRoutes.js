@@ -8,6 +8,7 @@ export const apiRoutes = {
     CHANGE_PASSWORD: '/change-password',
     NOT_FOUND: '*',
     BILLING: 'billing',
+    BILLINGBYID: 'getById',
     BILLING_BY_USER: 'billing/user',
     BILLING_DATE_RANGE: 'billing/date-range',
     BILLING_ITEM: 'billingItems',
